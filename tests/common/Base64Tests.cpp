@@ -61,4 +61,62 @@ TEST(Base64, UrlFormat) {
     EXPECT_EQ(const1, hex(decoded));
 }
 
+TEST(Base64, Empty) {
+    auto decoded = decode("");
+    ASSERT_TRUE(decoded.empty());
+
+    const auto encoded = encode({});
+    ASSERT_EQ("", encoded);
+}
+
+TEST(Base64, DecodeInvalidSequenceBecauseWrongChar) {
+    const auto sequence_to_be_decoded = " this$isnot valid_base64";
+
+    try {
+        decode(sequence_to_be_decoded);
+        FAIL() << "Decoding an invalid sequence should throw std::exception";
+    } catch (std::exception& e) {
+        ASSERT_STREQ("attempt to decode a value not in base64 char set", e.what());
+    } catch (...) {
+        FAIL() << "Decoding an invalid sequence should throw std::exception";
+    }
+}
+
+TEST(Base64, DecodeInvalidSequenceBecauseWrongLength) {
+    const auto sequence_to_be_decoded = "+this+is+not+valid+base64";
+
+    try {
+        decode(sequence_to_be_decoded);
+        FAIL() << "Decoding an invalid sequence should throw std::exception";
+    } catch (std::exception& e) {
+        ASSERT_STREQ("attempt to decode a value not in base64 char set", e.what());
+    } catch (...) {
+        FAIL() << "Decoding an invalid sequence should throw std::exception";
+    }
+}
+
+// the following two tests were copied from github.com/matheusgomes28/base64pp
+
+TEST(Base64, Padding)
+{
+    ASSERT_EQ("AA==", encode({0x00})); // One byte
+    ASSERT_EQ("AAA=", encode({0x00, 0x00})); // Two bytes
+    ASSERT_EQ("/uly", encode({0xFE, 0xE9, 0x72})); // Three bytes
+    ASSERT_EQ("dGhlIA==", encode({0x74, 0x68, 0x65, 0x20})); // Four
+    ASSERT_EQ("IGJyb3c=", encode({0x20, 0x62, 0x72, 0x6f, 0x77})); // Five
+    ASSERT_EQ("IGp1bXBz", encode({0x20, 0x6a, 0x75, 0x6d, 0x70, 0x73})); // Six
+}
+
+TEST(Base64, EncodesBrownFastFoxNullInMiddle)
+{
+    const Data input{0x74, 0x68, 0x65, 0x20, 0x71, 0x75,
+        0x69, 0x63, 0x6b, 0x21, 0x20, 0x62, 0x72, 0x6f, 0x77, 0x6e, 0x20, 0x66,
+        0x6f, 0x78, 0x20, 0x6a, 0x75, 0x6d, 0x70, 0x73, 0x20, 0x6f, 0x76, 0x65,
+        0x72, 0x20, 0x74, 0x68, 0x65, 0x00, 0x20, 0x6c, 0x61, 0x7a, 0x79, 0x20,
+        0x64, 0x6f, 0x67};
+
+    auto const expected = "dGhlIHF1aWNrISBicm93biBmb3gganVtcHMgb3ZlciB0aGUAIGxhenkgZG9n";
+    ASSERT_EQ(expected, encode(input));
+}
+
 } // namespace TW::Base64::tests
