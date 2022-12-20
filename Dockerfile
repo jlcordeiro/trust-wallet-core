@@ -46,6 +46,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo install --force cbindgen \
     && rustup target add wasm32-unknown-emscripten
 
+
 # ↑ Setup build environment
 # ↓ Build and compile wallet core
 
@@ -54,14 +55,6 @@ WORKDIR /wallet-core
 
 # Install dependencies
 RUN tools/install-dependencies
-
-# Build: generate, cmake, and make lib
-RUN tools/generate-files \
-    && cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=Debug \
-    && make -Cbuild -j12 TrustWalletCore
-
-# Build unit tester
-RUN make -Cbuild -j12 tests
 
 # Download and Install Go
 ENV GO_VERSION=1.16.12
